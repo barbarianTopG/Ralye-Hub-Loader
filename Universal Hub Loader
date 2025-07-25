@@ -1,0 +1,217 @@
+local GameScripts = {
+    [6403373529] = "slap_battles",
+    [116495829188952] = "dead_rails",
+    [2753915549] = "blox_fruits",
+    [102829972707814] = "civilization_survival",
+    [99567941238278] = "ink_game"
+}
+
+local SCRIPT_ACCESS_SECRET = "R4ly3Hub_S3cur3F3tchP4ss_2024";
+
+
+
+local function RalyeAuth_Begin(onSuccessCallback)
+	local Auth_HttpService = game:GetService("HttpService")
+	local Auth_request = request or syn.request or http.request or getgenv().request
+	local Auth_API_URL = "https://ralye-hub-backend.vercel.app"
+	local Auth_hwid = tostring(game:GetService("Players").LocalPlayer.UserId)
+	local Auth_keyFile = "ralye_key.txt"
+
+	local function Auth_createNotification(title, text, duration)
+		game.StarterGui:SetCore("SendNotification", { Title = title, Text = text, Duration = duration or 5 })
+	end
+
+	local function Auth_roundify(obj)
+		local corner = Instance.new("UICorner", obj)
+		corner.CornerRadius = UDim.new(0, 6)
+		local stroke = Instance.new("UIStroke", obj)
+		stroke.Thickness = 1
+		stroke.Color = Color3.fromRGB(80, 80, 80)
+	end
+
+	local Auth_TweenService = game:GetService("TweenService")
+	local Auth_ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
+	Auth_ScreenGui.Name = "RalyeKeyGUI_vFinal_Prefill"
+
+	local Auth_Frame = Instance.new("Frame", Auth_ScreenGui)
+	Auth_Frame.Size = UDim2.new(0, 300, 0, 220)
+	Auth_Frame.Position = UDim2.new(0.5, -150, 0.5, -110)
+	Auth_Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+	Auth_Frame.BorderSizePixel = 0
+	Auth_Frame.Active = true
+	Auth_Frame.Draggable = true
+	Auth_roundify(Auth_Frame)
+
+	local Auth_Title = Instance.new("TextLabel", Auth_Frame)
+	Auth_Title.Text = "Ralye Hub System"
+	Auth_Title.Size = UDim2.new(1, 0, 0, 30)
+	Auth_Title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+	Auth_Title.TextColor3 = Color3.new(1, 1, 1)
+	Auth_Title.Font = Enum.Font.SourceSansBold
+	Auth_Title.TextSize = 20
+	Auth_roundify(Auth_Title)
+
+	local Auth_TextBox = Instance.new("TextBox", Auth_Frame)
+	Auth_TextBox.PlaceholderText = "Enter your key here"
+	Auth_TextBox.Size = UDim2.new(0.9, 0, 0, 30)
+	Auth_TextBox.Position = UDim2.new(0.05, 0, 0, 45)
+	Auth_TextBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+	Auth_TextBox.TextColor3 = Color3.new(1, 1, 1)
+	Auth_TextBox.Font = Enum.Font.SourceSans
+	Auth_TextBox.TextSize = 16
+	Auth_roundify(Auth_TextBox)
+
+	local Auth_Submit = Instance.new("TextButton", Auth_Frame)
+	Auth_Submit.Text = "Submit Key"
+	Auth_Submit.Size = UDim2.new(0.9, 0, 0, 30)
+	Auth_Submit.Position = UDim2.new(0.05, 0, 0, 85)
+	Auth_Submit.BackgroundColor3 = Color3.fromRGB(60, 150, 60)
+	Auth_Submit.TextColor3 = Color3.new(1, 1, 1)
+	Auth_Submit.Font = Enum.Font.SourceSansBold
+	Auth_Submit.TextSize = 16
+	Auth_roundify(Auth_Submit)
+
+	local Auth_GetKey = Instance.new("TextButton", Auth_Frame)
+	Auth_GetKey.Text = "Get Key"
+	Auth_GetKey.Size = UDim2.new(0.9, 0, 0, 30)
+	Auth_GetKey.Position = UDim2.new(0.05, 0, 0, 125)
+	Auth_GetKey.BackgroundColor3 = Color3.fromRGB(60, 60, 150)
+	Auth_GetKey.TextColor3 = Color3.new(1, 1, 1)
+	Auth_GetKey.Font = Enum.Font.SourceSansBold
+	Auth_GetKey.TextSize = 16
+	Auth_roundify(Auth_GetKey)
+
+	local Auth_DiscordButton = Instance.new("TextButton", Auth_Frame)
+	Auth_DiscordButton.Text = "Join Discord"
+	Auth_DiscordButton.Size = UDim2.new(0.9, 0, 0, 30)
+	Auth_DiscordButton.Position = UDim2.new(0.05, 0, 0, 165)
+	Auth_DiscordButton.BackgroundColor3 = Color3.fromRGB(88, 101, 242)
+	Auth_DiscordButton.TextColor3 = Color3.new(1, 1, 1)
+	Auth_DiscordButton.Font = Enum.Font.SourceSansBold
+	Auth_DiscordButton.TextSize = 16
+	Auth_roundify(Auth_DiscordButton)
+
+	local Auth_debounce = false
+	local Auth_keyVerified = false
+
+	local function performVerification(userKey)
+		if Auth_debounce then return end
+		Auth_debounce = true
+		
+		local keyToVerify = userKey:match("^%s*(.-)%s*$")
+		
+		if not keyToVerify or keyToVerify == "" then
+			Auth_Submit.Text = "❌ Key was empty"
+			wait(2)
+			Auth_Submit.Text = "Submit Key"
+			Auth_debounce = false
+			return
+		end
+
+		Auth_Submit.Text = "Verifying..."
+
+		local response = Auth_request({
+			Url = Auth_API_URL .. "/api/validate",
+			Method = "POST",
+			Headers = {["Content-Type"] = "application/json"},
+			Body = Auth_HttpService:JSONEncode({key = keyToVerify, hwid = Auth_hwid})
+		})
+
+		if not response or not response.Body then
+			Auth_Submit.Text = "❌ Server Error"
+			wait(2)
+			Auth_Submit.Text = "Submit Key"
+			Auth_debounce = false
+			return
+		end
+
+		local jsonSuccess, responseData = pcall(Auth_HttpService.JSONDecode, Auth_HttpService, response.Body)
+		if not jsonSuccess then
+			Auth_Submit.Text = "❌ Response Error"
+			wait(2)
+			Auth_Submit.Text = "Submit Key"
+			Auth_debounce = false
+			return
+		end
+
+		if responseData.success == true then
+			if writefile then pcall(function() writefile(Auth_keyFile, keyToVerify) end) end
+			local tween = Auth_TweenService:Create(Auth_Frame, TweenInfo.new(0.4), {BackgroundTransparency = 1})
+			tween:Play()
+			tween.Completed:Wait()
+			Auth_ScreenGui:Destroy()
+			Auth_keyVerified = true
+		else
+			if delfile then pcall(function() delfile(Auth_keyFile) end) end
+			Auth_Submit.Text = "❌ " .. (responseData.message or "Invalid Key")
+			wait(2)
+			Auth_Submit.Text = "Submit Key"
+		end
+		Auth_debounce = false
+	end
+
+	Auth_Submit.MouseButton1Click:Connect(function() performVerification(Auth_TextBox.Text) end)
+	Auth_GetKey.MouseButton1Click:Connect(function()
+		setclipboard(Auth_API_URL)
+		Auth_GetKey.Text = "📋 Link Copied!"
+		wait(2)
+		Auth_GetKey.Text = "Get Key"
+	end)
+	Auth_DiscordButton.MouseButton1Click:Connect(function()
+		setclipboard("https://discord.gg/KeF7zJCPHH")
+		Auth_DiscordButton.Text = "📋 Link Copied!"
+		wait(2)
+		Auth_DiscordButton.Text = "Join Discord"
+	end)
+
+	pcall(function()
+		if isfile and readfile and isfile(Auth_keyFile) then
+			local savedKey = readfile(Auth_keyFile)
+			if savedKey and savedKey ~= "" then
+				Auth_TextBox.Text = savedKey
+			end
+		end
+	end)
+	Auth_ScreenGui.Enabled = true
+	
+	while not Auth_keyVerified do
+		wait(0.5)
+	end
+	
+	onSuccessCallback()
+end
+
+
+
+local function loadGameScript()
+    local currentGameId = game.PlaceId
+    local gameName = GameScripts[currentGameId]
+
+    if gameName then
+        local scriptUrl = Auth_API_URL .. "/api/get-script?game=" .. gameName .. "&secret=" .. SCRIPT_ACCESS_SECRET
+        print("[Ralye Hub] Game detected. Securely fetching script...")
+        
+        local success, scriptContent = pcall(function()
+            return game:HttpGet(scriptUrl)
+        end)
+        
+        if success and scriptContent:sub(1, 10) ~= "Unauthorized" and scriptContent:sub(1, 9) ~= "Not Found" then
+            loadstring(scriptContent)()
+        else
+            warn("[Ralye Hub] Failed to fetch or execute script. Response:", scriptContent)
+        end
+    else
+        print("[Ralye Hub] Game not supported: " .. tostring(currentGameId))
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "Ralye Hub",
+            Text = "This game is not currently supported.",
+            Duration = 10
+        })
+    end
+end
+
+
+
+print("Ralye Hub Universal Loader Initialized...")
+RalyeAuth_Begin(loadGameScript)
+print("Ralye Hub Closed.")
